@@ -25,7 +25,7 @@ function App() {
   useEffect(() => {
     const checkCurrentUser = async () => {
       try {
-        const response = await fetch('/api/current_user');
+        const response = await fetch('/auth/current_user');
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);

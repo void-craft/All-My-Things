@@ -1,4 +1,4 @@
-import { startServer } from '../server/index.js';
+import { startServer } from '../server/src/index.js';
 import { createServer } from 'vite';
 
 let viteServer;

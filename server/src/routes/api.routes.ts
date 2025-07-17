@@ -1,196 +1,12 @@
-// server/src/index.ts (or app.ts)
-import express from 'express';
-import dotenv from 'dotenv';
-import session from 'express-session';
-import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { setupStaticServing } from './static-serve.js';
-import { db } from './database/connection.js';
+// server/src/routes/api.routes.ts
+import { Router } from 'express';
+import { db } from '../database/connection.js';
 
-dotenv.config();
+const apiRouter = Router();
 
-const app = express();
+// --- Existing API Routes (Copied from your index.ts) ---
 
-// --- 1. User Type Definition (for TypeScript) ---
-declare global {
-  namespace Express {
-    interface User {
-      id: number;
-      google_id: string;
-      name: string;
-      email: string;
-    }
-    interface Request {
-      user?: User;
-    }
-  }
-}
-
-// --- 2. Session Middleware (MUST COME FIRST after app init) ---
-app.use(session({
-  secret: process.env.SESSION_SECRET as string,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000,
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-  },
-}));
-
-// --- 3. Body parsing middleware (MUST COME AFTER session, BEFORE Passport & Routes) ---
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// --- 4. Initialize Passport (MUST COME AFTER session & body parsers) ---
-app.use(passport.initialize());
-app.use(passport.session());
-
-// --- 5. Passport Serialization and Deserialization ---
-passport.serializeUser((user: Express.User, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id: number, done) => {
-  try {
-    const user = await db.selectFrom('users')
-      .selectAll()
-      .where('id', '=', id)
-      .executeTakeFirst();
-
-    if (user) {
-      done(null, {
-        id: user.id,
-        google_id: user.google_id,
-        name: user.name,
-        email: user.email
-      } as Express.User);
-    } else {
-      done(new Error('User not found in database'), null);
-    }
-  } catch (error) {
-    console.error('Error deserializing user:', error);
-    done(error, null);
-  }
-});
-
-// --- 6. Google OAuth 2.0 Strategy ---
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID as string,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    callbackURL: 'http://localhost:3000/auth/google/callback',
-    scope: ['profile', 'email'],
-  },
-  async (accessToken, refreshToken, profile, done) => {
-    try {
-      let user = await db.selectFrom('users')
-        .selectAll()
-        .where('google_id', '=', profile.id)
-        .executeTakeFirst();
-
-      if (user) {
-        done(null, {
-          id: user.id,
-          google_id: user.google_id,
-          name: user.name,
-          email: user.email
-        } as Express.User);
-      } else {
-        const newUser = await db.insertInto('users')
-          .values({
-            google_id: profile.id,
-            name: profile.displayName,
-            email: profile.emails && profile.emails.length > 0 ? profile.emails[0].value : null,
-          })
-          .returningAll()
-          .executeTakeFirst();
-
-        if (newUser) {
-          done(null, {
-            id: newUser.id,
-            google_id: newUser.google_id,
-            name: newUser.name,
-            email: newUser.email
-          } as Express.User);
-        } else {
-          done(new Error('Failed to create user in database'), null);
-        }
-      }
-    } catch (error) {
-      console.error('GoogleStrategy verification error:', error);
-      done(error, null);
-    }
-  }
-));
-
-// --- 7. Authentication Routes (MUST COME AFTER Passport setup) ---
-app.get(
-  '/auth/google',
-  (_req, res, next) => {
-    console.log('Backend: /auth/google route hit!');
-    console.log('Backend: GOOGLE_CLIENT_ID status:', process.env.GOOGLE_CLIENT_ID ? 'Loaded' : 'NOT LOADED');
-    console.log('Backend: GOOGLE_CLIENT_SECRET status:', process.env.GOOGLE_CLIENT_SECRET ? 'Loaded' : 'NOT LOADED');
-
-    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-      console.error('Backend: CRITICAL ERROR: Google Client ID or Secret not loaded from .env');
-      res.status(500).send('Server configuration error: Google credentials missing.');
-      return;
-    }
-    next();
-  },
-  passport.authenticate('google', {
-    scope: ['profile', 'email']
-  })
-);
-
-// Callback route after Google authentication
-app.get('/auth/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: '/login',
-    session: true
-  }),
-  (req, res) => {
-    console.log('Google authentication successful! User:', req.user?.name);
-    res.redirect('/');
-  }
-);
-
-// --- 8. Logout Route ---
-app.post('/auth/logout', (req, res, next) => {
-  req.logout((err) => {
-    if (err) {
-      return next(err);
-    }
-    req.session.destroy((err) => {
-      if (err) {
-        return next(err);
-      }
-      res.clearCookie('connect.sid');
-      console.log('User logged out and session destroyed.');
-      res.status(200).json({ message: 'Logged out successfully' });
-    });
-  });
-});
-
-// --- 9. Current User Endpoint (AFTER all auth middleware) ---
-app.get('/api/current_user', (req, res) => {
-  if (req.isAuthenticated() && req.user) {
-    console.log('Current user requested:', req.user.name);
-    res.json({
-      id: req.user.id,
-      name: req.user.name,
-      email: req.user.email,
-    });
-  } else {
-    console.log('No user authenticated.');
-    res.status(401).json({ message: 'Not authenticated' });
-  }
-});
-
-
-// --- Your existing API Routes (MUST COME BEFORE setupStaticServing) ---
-app.get('/api/rooms', async (req, res) => {
+apiRouter.get('/rooms', async (req, res) => {
   try {
     console.log('Fetching rooms...');
     const rooms = await db.selectFrom('rooms').selectAll().execute();
@@ -202,8 +18,7 @@ app.get('/api/rooms', async (req, res) => {
   }
 });
 
-
-app.post('/api/rooms', async (req, res) => {
+apiRouter.post('/rooms', async (req, res) => {
   try {
     const { name, color, icon } = req.body;
     console.log('Creating room:', { name, color, icon });
@@ -221,7 +36,7 @@ app.post('/api/rooms', async (req, res) => {
   }
 });
 
-app.delete('/api/rooms/:id', async (req, res) => {
+apiRouter.delete('/rooms/:id', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
     console.log('Deleting room:', roomId);
@@ -236,7 +51,7 @@ app.delete('/api/rooms/:id', async (req, res) => {
   }
 });
 
-app.get('/api/rooms/:id/items', async (req, res) => {
+apiRouter.get('/rooms/:id/items', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
     console.log('Fetching items for room:', roomId);
@@ -255,7 +70,7 @@ app.get('/api/rooms/:id/items', async (req, res) => {
   }
 });
 
-app.post('/api/rooms/:id/items', async (req, res) => {
+apiRouter.post('/rooms/:id/items', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
     const { name, quantity, unit, tags, image_url } = req.body;
@@ -274,7 +89,7 @@ app.post('/api/rooms/:id/items', async (req, res) => {
       .returningAll()
       .executeTakeFirst();
 
-    console.log('Room item created:', item);
+    console.log('Item created:', item);
     res.json(item);
   } catch (error) {
     console.error('Error creating room item:', error);
@@ -282,7 +97,7 @@ app.post('/api/rooms/:id/items', async (req, res) => {
   }
 });
 
-app.get('/api/rooms/:id/groups', async (req, res) => {
+apiRouter.get('/rooms/:id/groups', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
     console.log('Fetching groups for room:', roomId);
@@ -300,7 +115,7 @@ app.get('/api/rooms/:id/groups', async (req, res) => {
   }
 });
 
-app.post('/api/rooms/:id/groups', async (req, res) => {
+apiRouter.post('/rooms/:id/groups', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
     const { name, icon, image_url } = req.body;
@@ -319,7 +134,7 @@ app.post('/api/rooms/:id/groups', async (req, res) => {
   }
 });
 
-app.delete('/api/groups/:id', async (req, res) => {
+apiRouter.delete('/groups/:id', async (req, res) => {
   try {
     const groupId = parseInt(req.params.id);
     console.log('Deleting group:', groupId);
@@ -334,7 +149,7 @@ app.delete('/api/groups/:id', async (req, res) => {
   }
 });
 
-app.get('/api/groups/:id/items', async (req, res) => {
+apiRouter.get('/groups/:id/items', async (req, res) => {
   try {
     const groupId = parseInt(req.params.id);
     console.log('Fetching items for group:', groupId);
@@ -353,7 +168,7 @@ app.get('/api/groups/:id/items', async (req, res) => {
   }
 });
 
-app.post('/api/groups/:id/items', async (req, res) => {
+apiRouter.post('/groups/:id/items', async (req, res) => {
   try {
     const groupId = parseInt(req.params.id);
     const { name, quantity, unit, tags, image_url, room_id } = req.body;
@@ -380,7 +195,7 @@ app.post('/api/groups/:id/items', async (req, res) => {
   }
 });
 
-app.delete('/api/items/:id', async (req, res) => {
+apiRouter.delete('/items/:id', async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
     console.log('Deleting item:', itemId);
@@ -395,7 +210,7 @@ app.delete('/api/items/:id', async (req, res) => {
   }
 });
 
-app.get('/api/search', async (req, res) => {
+apiRouter.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
     console.log('Searching for:', query);
@@ -431,7 +246,7 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-app.get('/api/stores', async (req, res) => {
+apiRouter.get('/stores', async (req, res) => {
   try {
     console.log('Fetching stores...');
     const stores = await db.selectFrom('stores').selectAll().execute();
@@ -443,7 +258,7 @@ app.get('/api/stores', async (req, res) => {
   }
 });
 
-app.post('/api/stores', async (req, res) => {
+apiRouter.post('/stores', async (req, res) => {
   try {
     const { name, color, icon, image_url } = req.body;
     console.log('Creating store:', { name, color, icon, image_url });
@@ -461,7 +276,7 @@ app.post('/api/stores', async (req, res) => {
   }
 });
 
-app.delete('/api/stores/:id', async (req, res) => {
+apiRouter.delete('/stores/:id', async (req, res) => {
   try {
     const storeId = parseInt(req.params.id);
     console.log('Deleting store:', storeId);
@@ -476,7 +291,7 @@ app.delete('/api/stores/:id', async (req, res) => {
   }
 });
 
-app.get('/api/shopping-lists', async (req, res) => {
+apiRouter.get('/shopping-lists', async (req, res) => {
   try {
     console.log('Fetching shopping lists...');
     const lists = await db.selectFrom('shopping_lists')
@@ -492,7 +307,7 @@ app.get('/api/shopping-lists', async (req, res) => {
   }
 });
 
-app.post('/api/shopping-lists', async (req, res) => {
+apiRouter.post('/shopping-lists', async (req, res) => {
   try {
     const { store_name } = req.body;
     console.log('Creating shopping list:', { store_name });
@@ -510,7 +325,7 @@ app.post('/api/shopping-lists', async (req, res) => {
   }
 });
 
-app.get('/api/shopping-lists/:id/items', async (req, res) => {
+apiRouter.get('/shopping-lists/:id/items', async (req, res) => {
   try {
     const listId = parseInt(req.params.id);
     console.log('Fetching shopping items for list:', listId);
@@ -529,7 +344,7 @@ app.get('/api/shopping-lists/:id/items', async (req, res) => {
   }
 });
 
-app.post('/api/shopping-lists/:id/items', async (req, res) => {
+apiRouter.post('/shopping-lists/:id/items', async (req, res) => {
   try {
     const listId = parseInt(req.params.id);
     const { item_name, quantity, unit, store_id } = req.body;
@@ -554,7 +369,7 @@ app.post('/api/shopping-lists/:id/items', async (req, res) => {
   }
 });
 
-app.get('/api/notifications', async (req, res) => {
+apiRouter.get('/notifications', async (req, res) => {
   try {
     console.log('Fetching notifications...');
     const notifications = await db.selectFrom('notifications')
@@ -570,23 +385,4 @@ app.get('/api/notifications', async (req, res) => {
   }
 });
 
-// Export a function to start the server
-export async function startServer(port) {
-  try {
-    if (process.env.NODE_ENV === 'production') {
-      setupStaticServing(app);
-    }
-    app.listen(port, () => {
-      console.log(`All My Things API Server running on port ${port}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  }
-}
-
-// Start the server directly if this is the main module
-if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log('Starting All My Things server...');
-  startServer(process.env.PORT || 3001);
-}
+export default apiRouter;

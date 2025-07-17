@@ -1,3 +1,4 @@
+// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -35,7 +36,6 @@ export default defineConfig(({ mode }) => {
               'Access-Control-Allow-Headers',
               'Content-Type, Authorization, X-Requested-With',
             );
-
             if (req.method === 'OPTIONS') {
               res.statusCode = 204;
               return res.end();
@@ -51,7 +51,6 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './client/src'), 
       },
     },
-    
     root: path.join(process.cwd(), 'client'),
     build: {
       outDir: path.join(process.cwd(), 'dist/public'),
@@ -67,14 +66,41 @@ export default defineConfig(({ mode }) => {
       port: vitePort,
       allowedHosts: true,
       cors: true,
+      
       proxy: {
         '/api': {
           target: 'http://localhost:3001',
           changeOrigin: true,
+          // --- ADD THIS CONFIGURE FUNCTION FOR LOGGING ---
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+                console.log('[Vite Proxy: API] Forwarding:', req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+                console.log('[Vite Proxy: API] Received:', req.url, 'Status:', proxyRes.statusCode);
+            });
+            proxy.on('error', (err, req, res) => {
+                console.error('[Vite Proxy Error: API]', req.url, err);
+            });
+          },
+          // ------------------------------------------------
         },
         '/auth': {
           target: 'http://localhost:3001',
           changeOrigin: true,
+          // --- ADD THIS CONFIGURE FUNCTION FOR LOGGING ---
+          configure: (proxy, options) => {
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+                console.log('[Vite Proxy: AUTH] Forwarding:', req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+                console.log('[Vite Proxy: AUTH] Received:', req.url, 'Status:', proxyRes.statusCode);
+            });
+            proxy.on('error', (err, req, res) => {
+                console.error('[Vite Proxy Error: AUTH]', req.url, err);
+            });
+          },
+          // ------------------------------------------------
         },
       },
     },
