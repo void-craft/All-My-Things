@@ -42,6 +42,40 @@ app.post('/api/rooms', async (req, res) => {
   }
 });
 
+app.delete('/api/rooms/:id', async (req, res) => {
+  try {
+    const roomId = parseInt(req.params.id);
+    console.log('Deleting room:', roomId);
+    
+    await db.deleteFrom('rooms').where('id', '=', roomId).execute();
+    
+    console.log('Room deleted');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting room:', error);
+    res.status(500).json({ error: 'Failed to delete room' });
+  }
+});
+
+app.get('/api/rooms/:id/items', async (req, res) => {
+  try {
+    const roomId = parseInt(req.params.id);
+    console.log('Fetching items for room:', roomId);
+    
+    const items = await db.selectFrom('items')
+      .selectAll()
+      .where('room_id', '=', roomId)
+      .orderBy('name')
+      .execute();
+    
+    console.log('Items fetched:', items.length);
+    res.json(items);
+  } catch (error) {
+    console.error('Error fetching room items:', error);
+    res.status(500).json({ error: 'Failed to fetch room items' });
+  }
+});
+
 app.get('/api/rooms/:id/groups', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
@@ -101,12 +135,13 @@ app.get('/api/groups/:id/items', async (req, res) => {
 app.post('/api/groups/:id/items', async (req, res) => {
   try {
     const groupId = parseInt(req.params.id);
-    const { name, quantity, unit, tags, image_url } = req.body;
-    console.log('Creating item:', { name, quantity, unit, tags, image_url, groupId });
+    const { name, quantity, unit, tags, image_url, room_id } = req.body;
+    console.log('Creating item:', { name, quantity, unit, tags, image_url, groupId, room_id });
     
     const item = await db.insertInto('items')
       .values({ 
         group_id: groupId, 
+        room_id: room_id || null,
         name, 
         quantity: quantity || 1, 
         unit, 
@@ -124,6 +159,48 @@ app.post('/api/groups/:id/items', async (req, res) => {
   }
 });
 
+app.post('/api/rooms/:id/items', async (req, res) => {
+  try {
+    const roomId = parseInt(req.params.id);
+    const { name, quantity, unit, tags, image_url } = req.body;
+    console.log('Creating room item:', { name, quantity, unit, tags, image_url, roomId });
+    
+    const item = await db.insertInto('items')
+      .values({ 
+        room_id: roomId,
+        group_id: null,
+        name, 
+        quantity: quantity || 1, 
+        unit, 
+        tags, 
+        image_url 
+      })
+      .returningAll()
+      .executeTakeFirst();
+    
+    console.log('Room item created:', item);
+    res.json(item);
+  } catch (error) {
+    console.error('Error creating room item:', error);
+    res.status(500).json({ error: 'Failed to create room item' });
+  }
+});
+
+app.delete('/api/items/:id', async (req, res) => {
+  try {
+    const itemId = parseInt(req.params.id);
+    console.log('Deleting item:', itemId);
+    
+    await db.deleteFrom('items').where('id', '=', itemId).execute();
+    
+    console.log('Item deleted');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting item:', error);
+    res.status(500).json({ error: 'Failed to delete item' });
+  }
+});
+
 app.get('/api/search', async (req, res) => {
   try {
     const query = req.query.q as string;
@@ -134,8 +211,8 @@ app.get('/api/search', async (req, res) => {
     }
     
     const items = await db.selectFrom('items')
-      .innerJoin('item_groups', 'items.group_id', 'item_groups.id')
-      .innerJoin('rooms', 'item_groups.room_id', 'rooms.id')
+      .leftJoin('item_groups', 'items.group_id', 'item_groups.id')
+      .leftJoin('rooms', 'items.room_id', 'rooms.id')
       .select([
         'items.id',
         'items.name',
@@ -156,6 +233,36 @@ app.get('/api/search', async (req, res) => {
   } catch (error) {
     console.error('Error searching items:', error);
     res.status(500).json({ error: 'Failed to search items' });
+  }
+});
+
+app.get('/api/stores', async (req, res) => {
+  try {
+    console.log('Fetching stores...');
+    const stores = await db.selectFrom('stores').selectAll().execute();
+    console.log('Stores fetched:', stores.length);
+    res.json(stores);
+  } catch (error) {
+    console.error('Error fetching stores:', error);
+    res.status(500).json({ error: 'Failed to fetch stores' });
+  }
+});
+
+app.post('/api/stores', async (req, res) => {
+  try {
+    const { name, color, icon, image_url } = req.body;
+    console.log('Creating store:', { name, color, icon, image_url });
+    
+    const store = await db.insertInto('stores')
+      .values({ name, color, icon, image_url })
+      .returningAll()
+      .executeTakeFirst();
+    
+    console.log('Store created:', store);
+    res.json(store);
+  } catch (error) {
+    console.error('Error creating store:', error);
+    res.status(500).json({ error: 'Failed to create store' });
   }
 });
 
@@ -215,15 +322,16 @@ app.get('/api/shopping-lists/:id/items', async (req, res) => {
 app.post('/api/shopping-lists/:id/items', async (req, res) => {
   try {
     const listId = parseInt(req.params.id);
-    const { item_name, quantity, unit } = req.body;
-    console.log('Creating shopping item:', { item_name, quantity, unit, listId });
+    const { item_name, quantity, unit, store_id } = req.body;
+    console.log('Creating shopping item:', { item_name, quantity, unit, store_id, listId });
     
     const item = await db.insertInto('shopping_items')
       .values({ 
         shopping_list_id: listId, 
         item_name, 
         quantity: quantity || 1, 
-        unit 
+        unit,
+        store_id 
       })
       .returningAll()
       .executeTakeFirst();

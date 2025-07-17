@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DonutChart } from '@/components/home/DonutChart';
-import { RoomTooltip } from '@/components/home/RoomTooltip';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Room } from '@/types';
-import { Plus, Settings } from 'lucide-react';
+import { Plus, Settings, Sparkles } from 'lucide-react';
 
 export function HomePage() {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,64 +29,53 @@ export function HomePage() {
     navigate(`/room/${room.id}`);
   };
 
-  const handleRoomLongPress = (room: Room) => {
+  const handleRoomSelect = (room: Room, itemCount: number) => {
     setSelectedRoom(room);
-    setShowTooltip(true);
-  };
-
-  const handleCloseTooltip = () => {
-    setShowTooltip(false);
-    setSelectedRoom(null);
+    // Clear selection after 3 seconds
+    setTimeout(() => setSelectedRoom(null), 3000);
   };
 
   return (
     <div className="min-h-screen pb-20 gradient-bg">
       <div className="container mx-auto px-4 py-8">
-        <Card className="card-gradient border-0 shadow-lg">
+        <Card className="card-gradient border-0 shadow-2xl card-rounded">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-primary">
+            <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
+              <Sparkles className="w-8 h-8 text-yellow-500" />
               All My Things
+              <Sparkles className="w-8 h-8 text-yellow-500" />
             </CardTitle>
-            <p className="text-muted-foreground">
-              Tap a room to explore your inventory
+            <p className="text-muted-foreground font-medium">
+              Tap to explore • Hold to select
             </p>
           </CardHeader>
           <CardContent>
             <DonutChart
               rooms={rooms}
               onRoomClick={handleRoomClick}
-              onRoomLongPress={handleRoomLongPress}
+              onRoomSelect={handleRoomSelect}
+              selectedRoom={selectedRoom}
             />
           </CardContent>
         </Card>
 
-        <div className="mt-6 flex gap-4">
+        <div className="mt-8 flex gap-4">
           <Button
-            variant="outline"
-            className="flex-1 bg-card-gradient"
             onClick={() => navigate('/room/new')}
+            className="flex-1 btn-rounded button-gradient text-white font-bold"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="w-5 h-5 mr-2" />
             Add Room
           </Button>
           <Button
-            variant="outline"
-            className="flex-1 bg-card-gradient"
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/profile')}
+            className="flex-1 btn-rounded bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold"
           >
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings className="w-5 h-5 mr-2" />
             Settings
           </Button>
         </div>
       </div>
-
-      {selectedRoom && (
-        <RoomTooltip
-          room={selectedRoom}
-          isVisible={showTooltip}
-          onClose={handleCloseTooltip}
-        />
-      )}
     </div>
   );
 }

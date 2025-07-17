@@ -17,7 +17,8 @@ export interface ItemGroup {
 
 export interface Item {
   id: number;
-  group_id: number;
+  group_id: number | null;
+  room_id: number | null;
   name: string;
   quantity: number;
   unit: string | null;
@@ -44,6 +45,16 @@ export interface ShoppingItem {
   quantity: number;
   unit: string | null;
   completed: number;
+  store_id: number | null;
+  created_at: string;
+}
+
+export interface Store {
+  id: number;
+  name: string;
+  color: string;
+  icon: string | null;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -54,5 +65,13 @@ export interface Notification {
   title: string;
   message: string;
   read: number;
+  created_at: string;
+}
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  access_level: string;
   created_at: string;
 }

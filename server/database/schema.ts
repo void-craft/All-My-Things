@@ -16,7 +16,8 @@ export interface DatabaseSchema {
   };
   items: {
     id: number;
-    group_id: number;
+    group_id: number | null;
+    room_id: number | null;
     name: string;
     quantity: number;
     unit: string | null;
@@ -39,6 +40,21 @@ export interface DatabaseSchema {
     quantity: number;
     unit: string | null;
     completed: number;
+    store_id: number | null;
+    created_at: string;
+  };
+  stores: {
+    id: number;
+    name: string;
+    color: string;
+    icon: string | null;
+    image_url: string | null;
+    created_at: string;
+  };
+  store_items: {
+    id: number;
+    store_id: number;
+    item_id: number;
     created_at: string;
   };
   users: {

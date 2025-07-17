@@ -28,7 +28,7 @@
     --chart-3: 200 85% 65%;
     --chart-4: 280 65% 70%;
     --chart-5: 45 85% 70%;
-    --radius: 0.5rem;
+    --radius: 1rem;
   }
   
   .dark {
@@ -65,28 +65,63 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 text-foreground min-h-screen;
+    @apply bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 text-foreground min-h-screen;
+    font-family: 'Comic Sans MS', cursive, sans-serif;
   }
   
   .dark body {
-    @apply bg-gradient-to-br from-amber-900 via-orange-900 to-red-900;
+    @apply bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900;
   }
 }
 
 @layer utilities {
   .gradient-bg {
-    @apply bg-gradient-to-br from-amber-100 via-orange-100 to-red-100;
+    @apply bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100;
   }
   
   .dark .gradient-bg {
-    @apply bg-gradient-to-br from-amber-800 via-orange-800 to-red-800;
+    @apply bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900;
   }
   
   .card-gradient {
-    @apply bg-gradient-to-br from-stone-100 via-amber-50 to-orange-50;
+    @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
   }
   
   .dark .card-gradient {
-    @apply bg-gradient-to-br from-stone-800 via-amber-900 to-orange-900;
+    @apply bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-900;
+  }
+  
+  .button-gradient {
+    @apply bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700;
+  }
+  
+  .room-kitchen { @apply bg-gradient-to-br from-orange-400 to-red-500; }
+  .room-living { @apply bg-gradient-to-br from-green-400 to-emerald-500; }
+  .room-bedroom { @apply bg-gradient-to-br from-blue-400 to-cyan-500; }
+  .room-bathroom { @apply bg-gradient-to-br from-purple-400 to-pink-500; }
+  .room-office { @apply bg-gradient-to-br from-yellow-400 to-orange-500; }
+  .room-garage { @apply bg-gradient-to-br from-gray-400 to-slate-500; }
+  
+  .store-grocery { @apply bg-gradient-to-br from-green-400 to-emerald-600; }
+  .store-hardware { @apply bg-gradient-to-br from-orange-400 to-red-600; }
+  .store-pharmacy { @apply bg-gradient-to-br from-blue-400 to-cyan-600; }
+  .store-electronics { @apply bg-gradient-to-br from-purple-400 to-pink-600; }
+}
+
+@layer components {
+  .btn-rounded {
+    @apply rounded-full px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .card-rounded {
+    @apply rounded-3xl shadow-xl;
+  }
+  
+  .input-rounded {
+    @apply rounded-full px-4 py-2 border-2 border-purple-200 focus:border-purple-400 transition-colors;
+  }
+  
+  .icon-bounce {
+    @apply transition-transform duration-300 hover:scale-110;
   }
 }
