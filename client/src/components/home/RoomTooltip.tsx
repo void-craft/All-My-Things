@@ -1,3 +1,4 @@
+// RoomTooltip.tsx
 import { Room } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 
