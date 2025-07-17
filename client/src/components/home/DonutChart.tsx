@@ -1,6 +1,6 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts';
 import { Room, Item } from '@/types';
-import { Package, Home, ChefHat, Sofa, Bed, Droplets, Briefcase, Car, Hammer } from 'lucide-react';
+import { Package, ChefHat, Sofa, Bed, Droplets, Briefcase, Car, Hammer, Home } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const iconMap = {
@@ -18,8 +18,6 @@ const iconMap = {
 interface DonutChartProps {
   rooms: Room[];
   onRoomClick: (room: Room) => void;
-  onRoomSelect: (room: Room, itemCount: number) => void;
-  selectedRoom?: Room | null;
 }
 
 interface RoomData {
@@ -27,9 +25,30 @@ interface RoomData {
   itemCount: number;
 }
 
-export function DonutChart({ rooms, onRoomClick, onRoomSelect, selectedRoom }: DonutChartProps) {
+const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, room, itemCount }: any) => {
+  const RADIAN = Math.PI / 180;
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+  const IconComponent = iconMap[room.icon as keyof typeof iconMap] || Package;
+
+  return (
+    <g>
+      <foreignObject x={x - 15} y={y - 15} width="30" height="30">
+        <div className="flex items-center justify-center w-full h-full">
+          <IconComponent className="w-6 h-6 text-white drop-shadow-lg" />
+        </div>
+      </foreignObject>
+      <text x={x} y={y + 25} fill="white" textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="bold" className="drop-shadow-lg">
+        {itemCount}
+      </text>
+    </g>
+  );
+};
+
+export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
   const [roomData, setRoomData] = useState<RoomData[]>([]);
-  const [touchTimer, setTouchTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchRoomData();
@@ -59,7 +78,7 @@ export function DonutChart({ rooms, onRoomClick, onRoomSelect, selectedRoom }: D
 
   const chartData = roomData.map(({ room, itemCount }) => ({
     name: room.name,
-    value: Math.max(itemCount, 1), // Ensure minimum value for visibility
+    value: Math.max(itemCount, 1),
     color: room.color,
     room: room,
     itemCount: itemCount
@@ -71,101 +90,52 @@ export function DonutChart({ rooms, onRoomClick, onRoomSelect, selectedRoom }: D
     }
   };
 
-  const handleMouseDown = (data: any) => {
-    if (data && data.room) {
-      const timer = setTimeout(() => {
-        onRoomSelect(data.room, data.itemCount);
-      }, 500);
-      setTouchTimer(timer);
-    }
-  };
-
-  const handleMouseUp = () => {
-    if (touchTimer) {
-      clearTimeout(touchTimer);
-      setTouchTimer(null);
-    }
-  };
-
   const totalItems = roomData.reduce((sum, { itemCount }) => sum + itemCount, 0);
 
   return (
-    <div className="w-full h-96 relative">
+    <div className="w-full h-80">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={80}
-            outerRadius={160}
-            paddingAngle={3}
+            innerRadius={60}
+            outerRadius={120}
+            paddingAngle={2}
             dataKey="value"
             onClick={handleClick}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
           >
-            {chartData.map((entry, index) => {
-              const IconComponent = iconMap[entry.room.icon as keyof typeof iconMap] || Package;
-              return (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.color}
-                  className="cursor-pointer hover:opacity-80 transition-all duration-300"
-                  stroke={selectedRoom?.id === entry.room.id ? '#ffffff' : 'transparent'}
-                  strokeWidth={selectedRoom?.id === entry.room.id ? 4 : 0}
+            {chartData.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.color}
+                className="cursor-pointer hover:opacity-80 transition-all duration-300"
+              />
+            ))}
+            <LabelList
+              content={({ cx, cy, midAngle, innerRadius, outerRadius, ...props }) => (
+                <CustomLabel
+                  cx={cx}
+                  cy={cy}
+                  midAngle={midAngle}
+                  innerRadius={innerRadius}
+                  outerRadius={outerRadius}
+                  room={chartData[props.index]?.room}
+                  itemCount={chartData[props.index]?.itemCount}
                 />
-              );
-            })}
+              )}
+            />
           </Pie>
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload[0]) {
-                const data = payload[0].payload;
-                const IconComponent = iconMap[data.room.icon as keyof typeof iconMap] || Package;
-                return (
-                  <div className="bg-card p-4 rounded-2xl border shadow-lg card-gradient">
-                    <div className="flex items-center gap-2 mb-2">
-                      <IconComponent className="w-5 h-5 text-primary" />
-                      <p className="font-semibold">{data.name}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{data.itemCount} items</p>
-                    <p className="text-xs text-muted-foreground mt-1">Tap to enter • Hold to select</p>
-                  </div>
-                );
-              }
-              return null;
-            }}
-          />
         </PieChart>
       </ResponsiveContainer>
       
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          {selectedRoom ? (
-            <>
-              <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center card-gradient shadow-lg">
-                {(() => {
-                  const IconComponent = iconMap[selectedRoom.icon as keyof typeof iconMap] || Package;
-                  return <IconComponent className="w-8 h-8 text-primary" />;
-                })()}
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-1">{selectedRoom.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {roomData.find(r => r.room.id === selectedRoom.id)?.itemCount || 0} items
-              </p>
-            </>
-          ) : (
-            <>
-              <div className="w-16 h-16 rounded-full mx-auto mb-3 flex items-center justify-center card-gradient shadow-lg">
-                <Package className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-bold text-primary mb-1">All My Things</h3>
-              <p className="text-sm text-muted-foreground">{totalItems} total items</p>
-            </>
-          )}
+      <div className="text-center mt-4">
+        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-2 flex items-center justify-center">
+          <Package className="w-6 h-6 text-white" />
         </div>
+        <h3 className="text-lg font-bold text-primary mb-1">All My Things</h3>
+        <p className="text-sm text-muted-foreground">{totalItems} total items</p>
       </div>
     </div>
   );

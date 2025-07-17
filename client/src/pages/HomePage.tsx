@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DonutChart } from '@/components/home/DonutChart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Room } from '@/types';
-import { Plus, Settings, Sparkles } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 
 export function HomePage() {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,37 +27,22 @@ export function HomePage() {
     navigate(`/room/${room.id}`);
   };
 
-  const handleRoomSelect = (room: Room, itemCount: number) => {
-    setSelectedRoom(room);
-    // Clear selection after 3 seconds
-    setTimeout(() => setSelectedRoom(null), 3000);
-  };
-
   return (
     <div className="min-h-screen pb-20 gradient-bg">
-      <div className="container mx-auto px-4 py-8">
-        <Card className="card-gradient border-0 shadow-2xl card-rounded">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-bold text-primary flex items-center justify-center gap-2">
-              <Sparkles className="w-8 h-8 text-yellow-500" />
-              All My Things
-              <Sparkles className="w-8 h-8 text-yellow-500" />
-            </CardTitle>
-            <p className="text-muted-foreground font-medium">
-              Tap to explore • Hold to select
-            </p>
-          </CardHeader>
-          <CardContent>
-            <DonutChart
-              rooms={rooms}
-              onRoomClick={handleRoomClick}
-              onRoomSelect={handleRoomSelect}
-              selectedRoom={selectedRoom}
-            />
-          </CardContent>
-        </Card>
+      <div className="px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-primary mb-2">All My Things</h1>
+          <p className="text-muted-foreground font-medium">
+            Tap a room to explore your inventory
+          </p>
+        </div>
 
-        <div className="mt-8 flex gap-4">
+        <DonutChart
+          rooms={rooms}
+          onRoomClick={handleRoomClick}
+        />
+
+        <div className="mt-8 flex gap-4 px-4">
           <Button
             onClick={() => navigate('/room/new')}
             className="flex-1 btn-rounded button-gradient text-white font-bold"

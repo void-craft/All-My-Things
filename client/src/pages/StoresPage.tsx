@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Store } from '@/types';
-import { Plus, Store as StoreIcon, ShoppingCart, Hammer, Pill, Smartphone } from 'lucide-react';
+import { Plus, Store as StoreIcon, ShoppingCart, Hammer, Pill, Smartphone, Edit, Trash2 } from 'lucide-react';
 
 const storeIconMap = {
   ShoppingCart,
   Hammer,
   Pill,
   Smartphone,
-  StoreIcon,
+  Store: StoreIcon,
 };
 
 export function StoresPage() {
@@ -28,6 +28,17 @@ export function StoresPage() {
       setStores(data);
     } catch (error) {
       console.error('Failed to fetch stores:', error);
+    }
+  };
+
+  const handleDeleteStore = async (storeId: number) => {
+    if (window.confirm('Are you sure you want to delete this store?')) {
+      try {
+        await fetch(`/api/stores/${storeId}`, { method: 'DELETE' });
+        fetchStores(); // Refresh the list
+      } catch (error) {
+        console.error('Failed to delete store:', error);
+      }
     }
   };
 
@@ -71,26 +82,47 @@ export function StoresPage() {
               return (
                 <Card
                   key={store.id}
-                  className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 card-gradient card-rounded"
-                  onClick={() => handleStoreClick(store)}
+                  className="hover:shadow-lg transition-all duration-300 hover:scale-105 card-gradient card-rounded"
                 >
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div 
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: store.color }}
-                      >
-                        {store.image_url ? (
-                          <img 
-                            src={store.image_url} 
-                            alt={store.name}
-                            className="w-full h-full object-cover rounded-full"
-                          />
-                        ) : (
-                          <IconComponent className="w-6 h-6 text-white" />
-                        )}
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-12 h-12 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: store.color }}
+                        >
+                          {store.image_url ? (
+                            <img 
+                              src={store.image_url} 
+                              alt={store.name}
+                              className="w-full h-full object-cover rounded-full"
+                            />
+                          ) : (
+                            <IconComponent className="w-6 h-6 text-white" />
+                          )}
+                        </div>
+                        <span className="text-foreground font-bold cursor-pointer" onClick={() => handleStoreClick(store)}>
+                          {store.name}
+                        </span>
                       </div>
-                      <span className="text-foreground font-bold">{store.name}</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => navigate(`/store/${store.id}/edit`)}
+                          className="bg-card-gradient rounded-full"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleDeleteStore(store.id)}
+                          className="bg-card-gradient rounded-full text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </CardTitle>
                   </CardHeader>
                 </Card>

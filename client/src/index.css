@@ -4,58 +4,58 @@
 
 @layer base {
   :root {
-    --background: 87 15% 95%;
-    --foreground: 28 18% 15%;
-    --card: 45 15% 92%;
-    --card-foreground: 28 18% 15%;
-    --popover: 45 15% 92%;
-    --popover-foreground: 28 18% 15%;
-    --primary: 28 45% 35%;
-    --primary-foreground: 45 85% 95%;
-    --secondary: 120 15% 75%;
-    --secondary-foreground: 28 18% 15%;
-    --muted: 45 15% 88%;
-    --muted-foreground: 28 8% 45%;
-    --accent: 35 25% 85%;
-    --accent-foreground: 28 18% 15%;
-    --destructive: 0 65% 55%;
-    --destructive-foreground: 0 85% 95%;
-    --border: 45 15% 82%;
-    --input: 45 15% 82%;
-    --ring: 28 45% 35%;
-    --chart-1: 25 85% 65%;
-    --chart-2: 120 65% 55%;
-    --chart-3: 200 85% 65%;
-    --chart-4: 280 65% 70%;
-    --chart-5: 45 85% 70%;
+    --background: 254 100% 97%;
+    --foreground: 342 100% 15%;
+    --card: 43 96% 93%;
+    --card-foreground: 342 100% 15%;
+    --popover: 43 96% 93%;
+    --popover-foreground: 342 100% 15%;
+    --primary: 280 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 120 60% 75%;
+    --secondary-foreground: 342 100% 15%;
+    --muted: 60 20% 88%;
+    --muted-foreground: 342 50% 45%;
+    --accent: 35 80% 85%;
+    --accent-foreground: 342 100% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 43 50% 82%;
+    --input: 43 50% 82%;
+    --ring: 280 80% 55%;
+    --chart-1: 25 95% 65%;
+    --chart-2: 120 75% 55%;
+    --chart-3: 200 95% 65%;
+    --chart-4: 280 75% 70%;
+    --chart-5: 45 95% 70%;
     --radius: 1rem;
   }
   
   .dark {
-    --background: 28 15% 12%;
-    --foreground: 45 85% 88%;
-    --card: 28 15% 15%;
-    --card-foreground: 45 85% 88%;
-    --popover: 28 15% 15%;
-    --popover-foreground: 45 85% 88%;
-    --primary: 45 65% 75%;
-    --primary-foreground: 28 18% 15%;
-    --secondary: 120 15% 25%;
-    --secondary-foreground: 45 85% 88%;
-    --muted: 28 15% 22%;
-    --muted-foreground: 45 25% 65%;
-    --accent: 35 25% 25%;
-    --accent-foreground: 45 85% 88%;
-    --destructive: 0 65% 45%;
-    --destructive-foreground: 0 85% 95%;
-    --border: 28 15% 22%;
-    --input: 28 15% 22%;
-    --ring: 45 65% 75%;
-    --chart-1: 25 85% 65%;
-    --chart-2: 120 65% 55%;
-    --chart-3: 200 85% 65%;
-    --chart-4: 280 65% 70%;
-    --chart-5: 45 85% 70%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 88%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 88%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 88%;
+    --primary: 0 0% 75%;
+    --primary-foreground: 0 0% 15%;
+    --secondary: 0 0% 25%;
+    --secondary-foreground: 0 0% 88%;
+    --muted: 0 0% 22%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 25%;
+    --accent-foreground: 0 0% 88%;
+    --destructive: 0 62% 45%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 0 0% 75%;
+    --chart-1: 0 0% 65%;
+    --chart-2: 0 0% 55%;
+    --chart-3: 0 0% 45%;
+    --chart-4: 0 0% 35%;
+    --chart-5: 0 0% 25%;
   }
 }
 
@@ -65,34 +65,38 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100 text-foreground min-h-screen;
+    @apply bg-gradient-to-br from-purple-200 via-pink-200 to-orange-200 text-foreground min-h-screen;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   
   .dark body {
-    @apply bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900;
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700;
   }
 }
 
 @layer utilities {
   .gradient-bg {
-    @apply bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100;
+    @apply bg-gradient-to-br from-blue-200 via-purple-200 to-pink-200;
   }
   
   .dark .gradient-bg {
-    @apply bg-gradient-to-br from-blue-900 via-purple-900 to-pink-900;
+    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700;
   }
   
   .card-gradient {
-    @apply bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50;
+    @apply bg-gradient-to-br from-emerald-100 via-teal-100 to-cyan-100;
   }
   
   .dark .card-gradient {
-    @apply bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-900;
+    @apply bg-gradient-to-br from-gray-800 via-gray-700 to-gray-600;
   }
   
   .button-gradient {
     @apply bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700;
+  }
+  
+  .dark .button-gradient {
+    @apply bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800;
   }
   
   .room-kitchen { @apply bg-gradient-to-br from-orange-400 to-red-500; }
@@ -102,10 +106,22 @@
   .room-office { @apply bg-gradient-to-br from-yellow-400 to-orange-500; }
   .room-garage { @apply bg-gradient-to-br from-gray-400 to-slate-500; }
   
+  .dark .room-kitchen { @apply bg-gradient-to-br from-gray-500 to-gray-600; }
+  .dark .room-living { @apply bg-gradient-to-br from-gray-600 to-gray-700; }
+  .dark .room-bedroom { @apply bg-gradient-to-br from-gray-400 to-gray-500; }
+  .dark .room-bathroom { @apply bg-gradient-to-br from-gray-500 to-gray-600; }
+  .dark .room-office { @apply bg-gradient-to-br from-gray-600 to-gray-700; }
+  .dark .room-garage { @apply bg-gradient-to-br from-gray-400 to-gray-500; }
+  
   .store-grocery { @apply bg-gradient-to-br from-green-400 to-emerald-600; }
   .store-hardware { @apply bg-gradient-to-br from-orange-400 to-red-600; }
   .store-pharmacy { @apply bg-gradient-to-br from-blue-400 to-cyan-600; }
   .store-electronics { @apply bg-gradient-to-br from-purple-400 to-pink-600; }
+  
+  .dark .store-grocery { @apply bg-gradient-to-br from-gray-500 to-gray-600; }
+  .dark .store-hardware { @apply bg-gradient-to-br from-gray-600 to-gray-700; }
+  .dark .store-pharmacy { @apply bg-gradient-to-br from-gray-400 to-gray-500; }
+  .dark .store-electronics { @apply bg-gradient-to-br from-gray-500 to-gray-600; }
 }
 
 @layer components {
@@ -119,6 +135,10 @@
   
   .input-rounded {
     @apply rounded-full px-4 py-2 border-2 border-purple-200 focus:border-purple-400 transition-colors;
+  }
+  
+  .dark .input-rounded {
+    @apply border-gray-600 focus:border-gray-400;
   }
   
   .icon-bounce {

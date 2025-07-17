@@ -76,6 +76,33 @@ app.get('/api/rooms/:id/items', async (req, res) => {
   }
 });
 
+app.post('/api/rooms/:id/items', async (req, res) => {
+  try {
+    const roomId = parseInt(req.params.id);
+    const { name, quantity, unit, tags, image_url } = req.body;
+    console.log('Creating room item:', { name, quantity, unit, tags, image_url, roomId });
+    
+    const item = await db.insertInto('items')
+      .values({ 
+        room_id: roomId,
+        group_id: null,
+        name, 
+        quantity: quantity || 1, 
+        unit, 
+        tags, 
+        image_url 
+      })
+      .returningAll()
+      .executeTakeFirst();
+    
+    console.log('Room item created:', item);
+    res.json(item);
+  } catch (error) {
+    console.error('Error creating room item:', error);
+    res.status(500).json({ error: 'Failed to create room item' });
+  }
+});
+
 app.get('/api/rooms/:id/groups', async (req, res) => {
   try {
     const roomId = parseInt(req.params.id);
@@ -110,6 +137,21 @@ app.post('/api/rooms/:id/groups', async (req, res) => {
   } catch (error) {
     console.error('Error creating group:', error);
     res.status(500).json({ error: 'Failed to create group' });
+  }
+});
+
+app.delete('/api/groups/:id', async (req, res) => {
+  try {
+    const groupId = parseInt(req.params.id);
+    console.log('Deleting group:', groupId);
+    
+    await db.deleteFrom('item_groups').where('id', '=', groupId).execute();
+    
+    console.log('Group deleted');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    res.status(500).json({ error: 'Failed to delete group' });
   }
 });
 
@@ -156,33 +198,6 @@ app.post('/api/groups/:id/items', async (req, res) => {
   } catch (error) {
     console.error('Error creating item:', error);
     res.status(500).json({ error: 'Failed to create item' });
-  }
-});
-
-app.post('/api/rooms/:id/items', async (req, res) => {
-  try {
-    const roomId = parseInt(req.params.id);
-    const { name, quantity, unit, tags, image_url } = req.body;
-    console.log('Creating room item:', { name, quantity, unit, tags, image_url, roomId });
-    
-    const item = await db.insertInto('items')
-      .values({ 
-        room_id: roomId,
-        group_id: null,
-        name, 
-        quantity: quantity || 1, 
-        unit, 
-        tags, 
-        image_url 
-      })
-      .returningAll()
-      .executeTakeFirst();
-    
-    console.log('Room item created:', item);
-    res.json(item);
-  } catch (error) {
-    console.error('Error creating room item:', error);
-    res.status(500).json({ error: 'Failed to create room item' });
   }
 });
 
@@ -263,6 +278,21 @@ app.post('/api/stores', async (req, res) => {
   } catch (error) {
     console.error('Error creating store:', error);
     res.status(500).json({ error: 'Failed to create store' });
+  }
+});
+
+app.delete('/api/stores/:id', async (req, res) => {
+  try {
+    const storeId = parseInt(req.params.id);
+    console.log('Deleting store:', storeId);
+    
+    await db.deleteFrom('stores').where('id', '=', storeId).execute();
+    
+    console.log('Store deleted');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting store:', error);
+    res.status(500).json({ error: 'Failed to delete store' });
   }
 });
 
