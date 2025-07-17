@@ -1,7 +1,17 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from 'recharts';
-import { Room, Item } from '@/types';
-import { Package, ChefHat, Sofa, Bed, Droplets, Briefcase, Car, Hammer, Home } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from "recharts";
+import { Room, Item } from "@/types";
+import {
+  Package,
+  ChefHat,
+  Sofa,
+  Bed,
+  Droplets,
+  Briefcase,
+  Car,
+  Hammer,
+  Home,
+} from "lucide-react";
+import { useState, useEffect } from "react";
 
 const iconMap = {
   ChefHat,
@@ -25,7 +35,15 @@ interface RoomData {
   itemCount: number;
 }
 
-const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, room, itemCount }: any) => {
+const CustomLabel = ({
+  cx,
+  cy,
+  midAngle,
+  innerRadius,
+  outerRadius,
+  room,
+  itemCount,
+}: any) => {
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
@@ -40,7 +58,16 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, room, itemCou
           <IconComponent className="w-6 h-6 text-white drop-shadow-lg" />
         </div>
       </foreignObject>
-      <text x={x} y={y + 25} fill="white" textAnchor="middle" dominantBaseline="middle" fontSize="12" fontWeight="bold" className="drop-shadow-lg">
+      <text
+        x={x}
+        y={y + 25}
+        fill="white"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize="12"
+        fontWeight="bold"
+        className="drop-shadow-lg"
+      >
         {itemCount}
       </text>
     </g>
@@ -61,13 +88,13 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
         const items: Item[] = await response.json();
         return {
           room,
-          itemCount: items.length
+          itemCount: items.length,
         };
       } catch (error) {
         console.error(`Failed to fetch items for room ${room.id}:`, error);
         return {
           room,
-          itemCount: 0
+          itemCount: 0,
         };
       }
     });
@@ -81,7 +108,7 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
     value: Math.max(itemCount, 1),
     color: room.color,
     room: room,
-    itemCount: itemCount
+    itemCount: itemCount,
   }));
 
   const handleClick = (data: any) => {
@@ -90,7 +117,10 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
     }
   };
 
-  const totalItems = roomData.reduce((sum, { itemCount }) => sum + itemCount, 0);
+  const totalItems = roomData.reduce(
+    (sum, { itemCount }) => sum + itemCount,
+    0,
+  );
 
   return (
     <div className="w-full h-80">
@@ -114,7 +144,14 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
               />
             ))}
             <LabelList
-              content={({ cx, cy, midAngle, innerRadius, outerRadius, ...props }) => (
+              content={({
+                cx,
+                cy,
+                midAngle,
+                innerRadius,
+                outerRadius,
+                ...props
+              }) => (
                 <CustomLabel
                   cx={cx}
                   cy={cy}
@@ -129,13 +166,15 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      
-      <div className="text-center mt-4">
+
+      <div className="text-center mt-[0px] mb-[20px]">
         <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-2 flex items-center justify-center">
           <Package className="w-6 h-6 text-white" />
         </div>
         <h3 className="text-lg font-bold text-primary mb-1">All My Things</h3>
-        <p className="text-sm text-muted-foreground">{totalItems} total items</p>
+        <p className="text-sm text-muted-foreground">
+          {totalItems} total items
+        </p>
       </div>
     </div>
   );
