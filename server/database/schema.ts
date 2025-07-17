@@ -1,3 +1,4 @@
+// server/database/schema.ts
 export interface DatabaseSchema {
   rooms: {
     id: number;
@@ -59,8 +60,9 @@ export interface DatabaseSchema {
   };
   users: {
     id: number;
+    google_id: string;
     name: string;
-    email: string;
+    email: string | null;
     access_level: string;
     created_at: string;
   };

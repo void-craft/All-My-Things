@@ -4,36 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Package } from 'lucide-react';
 
-interface LoginPageProps {
-  onLogin: (user: any) => void;
-}
+export function LoginPage() {
+  const [loading, setLoading] = useState( false);
 
-export function LoginPage({ onLogin }: LoginPageProps) {
-  const [loading, setLoading] = useState(false);
-
-  const handleGoogleAuth = async () => {
+  const handleGoogleAuth = () => {
     setLoading(true);
-    try {
-      // In a real application, you would redirect to your backend's Google OAuth initiation endpoint.
-      // Your backend would then handle the OAuth flow and redirect back to the frontend.
-      // For example:
-      window.location.href = '/auth/google'; // Replace with your actual backend OAuth initiation route
-
-      // The onLogin callback typically happens *after* the backend has completed the OAuth flow
-      // and redirected the user back to the frontend, where your main App component
-      // would detect the logged-in user (e.g., via a session or token).
-      // The mock user data and setTimeout are removed as they are no longer needed for actual auth.
-
-      // We remove the direct onLogin(mockUser) here because the actual login state update
-      // will happen when the browser is redirected back to the frontend from the backend,
-      // and your main App component processes the authenticated state.
-
-    } catch (error) {
-      console.error('Google authentication failed:', error);
-      // You might want to display an error message to the user here
-    } finally {
-      setLoading(false); // Reset loading state if the initial redirect fails for some reason
-    }
+    window.location.href = '/auth/google';
   };
 
   return (

@@ -1,5 +1,5 @@
-// App.tsx
-import { useState } from 'react';
+// client/src/App.tsx
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { HomePage } from '@/pages/HomePage';
@@ -16,21 +16,53 @@ import { AddStorePage } from '@/pages/AddStorePage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { User } from '@/types';
-import { RoomEditPage } from '@/pages/RoomEditPage';
+import { RoomEditPage } from '@/pages/RoomEditPage'; 
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
-  const handleLogin = (userData: User) => {
-    setUser(userData);
+  useEffect(() => {
+    const checkCurrentUser = async () => {
+      try {
+        const response = await fetch('/api/current_user');
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+        setUser(null);
+      } finally {
+        setLoadingUser(false);
+      }
+    };
+
+    checkCurrentUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Failed to logout on backend:', error);
+    } finally {
+      setUser(null);
+    }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-  };
+  if (loadingUser) {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center">
+        <p className="text-xl text-primary font-bold animate-pulse">Loading App...</p>
+      </div>
+    );
+  }
 
   if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
+    return <LoginPage />;
   }
 
   return (
