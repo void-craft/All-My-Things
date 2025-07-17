@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DonutChart } from "@/components/home/DonutChart";
 import { Button } from "@/components/ui/button";
 import { Room } from "@/types";
-import { Plus, Settings } from "lucide-react";
+import { Plus } from "lucide-react";
 
 export function HomePage() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -34,9 +34,6 @@ export function HomePage() {
           <h1 className="text-3xl font-bold text-primary mb-2">
             All My Things
           </h1>
-          <p className="text-muted-foreground font-medium">
-            Tap a room to explore your inventory
-          </p>
         </div>
 
         <DonutChart rooms={rooms} onRoomClick={handleRoomClick} />
@@ -48,13 +45,6 @@ export function HomePage() {
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Room
-          </Button>
-          <Button
-            onClick={() => navigate("/profile")}
-            className="flex-1 btn-rounded bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold"
-          >
-            <Settings className="w-5 h-5 mr-2" />
-            Settings
           </Button>
         </div>
       </div>

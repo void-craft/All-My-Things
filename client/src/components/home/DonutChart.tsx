@@ -1,3 +1,4 @@
+// client/src/components/home/DonutChart.tsx
 import { PieChart, Pie, Cell, ResponsiveContainer, LabelList } from "recharts";
 import { Room, Item } from "@/types";
 import {
@@ -123,7 +124,7 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
   );
 
   return (
-    <div className="w-full h-80">
+    <div className="relative w-full h-80">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -144,20 +145,13 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
               />
             ))}
             <LabelList
-              content={({
-                cx,
-                cy,
-                midAngle,
-                innerRadius,
-                outerRadius,
-                ...props
-              }) => (
+              content={(props: any) => (
                 <CustomLabel
-                  cx={cx}
-                  cy={cy}
-                  midAngle={midAngle}
-                  innerRadius={innerRadius}
-                  outerRadius={outerRadius}
+                  cx={props.cx}
+                  cy={props.cy}
+                  midAngle={props.midAngle}
+                  innerRadius={props.innerRadius}
+                  outerRadius={props.outerRadius}
                   room={chartData[props.index]?.room}
                   itemCount={chartData[props.index]?.itemCount}
                 />
@@ -166,12 +160,10 @@ export function DonutChart({ rooms, onRoomClick }: DonutChartProps) {
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-
-      <div className="text-center mt-[0px] mb-[20px]">
-        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full mx-auto mb-2 flex items-center justify-center">
-          <Package className="w-6 h-6 text-white" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+        <div className="w-15 h-15 mx-auto mb-2 flex items-center justify-center">
+          <Package className="w-10 h-10 text-white" />
         </div>
-        <h3 className="text-lg font-bold text-primary mb-1">All My Things</h3>
         <p className="text-sm text-muted-foreground">
           {totalItems} total items
         </p>
