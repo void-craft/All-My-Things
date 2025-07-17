@@ -1,3 +1,4 @@
+// client/src/pages/LoginPage.tsx
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,23 +14,25 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const handleGoogleAuth = async () => {
     setLoading(true);
     try {
-      // Simulate Google authentication
-      // In a real app, this would integrate with Google OAuth
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data
-      const mockUser = {
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        access_level: 'admin'
-      };
-      
-      onLogin(mockUser);
+      // In a real application, you would redirect to your backend's Google OAuth initiation endpoint.
+      // Your backend would then handle the OAuth flow and redirect back to the frontend.
+      // For example:
+      window.location.href = '/auth/google'; // Replace with your actual backend OAuth initiation route
+
+      // The onLogin callback typically happens *after* the backend has completed the OAuth flow
+      // and redirected the user back to the frontend, where your main App component
+      // would detect the logged-in user (e.g., via a session or token).
+      // The mock user data and setTimeout are removed as they are no longer needed for actual auth.
+
+      // We remove the direct onLogin(mockUser) here because the actual login state update
+      // will happen when the browser is redirected back to the frontend from the backend,
+      // and your main App component processes the authenticated state.
+
     } catch (error) {
-      console.error('Google auth failed:', error);
+      console.error('Google authentication failed:', error);
+      // You might want to display an error message to the user here
     } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state if the initial redirect fails for some reason
     }
   };
 
@@ -53,7 +56,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               Organize your belongings with ease
             </p>
           </div>
-          
+
           <Button
             onClick={handleGoogleAuth}
             disabled={loading}
@@ -62,7 +65,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             {loading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
-                Signing in...
+                Redirecting to Google...
               </div>
             ) : (
               <>
@@ -88,7 +91,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               </>
             )}
           </Button>
-          
+
           <div className="text-center">
             <p className="text-xs text-muted-foreground">
               By signing in, you agree to our Terms of Service and Privacy Policy

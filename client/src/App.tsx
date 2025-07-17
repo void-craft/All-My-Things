@@ -1,3 +1,4 @@
+// App.tsx
 import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
@@ -15,6 +16,7 @@ import { AddStorePage } from '@/pages/AddStorePage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { User } from '@/types';
+import { RoomEditPage } from '@/pages/RoomEditPage';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -38,6 +40,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/room/new" element={<AddRoomPage />} />
           <Route path="/room/:id" element={<RoomPage />} />
+          <Route path="/room/:id/edit" element={<RoomEditPage />} />
           <Route path="/room/:roomId/item/new" element={<AddItemPage />} />
           <Route path="/group/:id" element={<GroupPage />} />
           <Route path="/group/:groupId/item/new" element={<AddItemPage />} />
