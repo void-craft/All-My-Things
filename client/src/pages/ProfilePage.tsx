@@ -2,9 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { User, Settings, Moon, Sun, Cloud, Download, Upload } from 'lucide-react';
+import { User, Settings, Moon, Cloud, Download, Upload, LogOut } from 'lucide-react';
 
-export function ProfilePage() {
+interface ProfilePageProps {
+  user: any;
+  onLogout: () => void;
+}
+
+export function ProfilePage({ user, onLogout }: ProfilePageProps) {
   const toggleTheme = () => {
     document.documentElement.classList.toggle('dark');
   };
@@ -13,17 +18,17 @@ export function ProfilePage() {
     <div className="min-h-screen pb-20 gradient-bg">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-primary" />
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+            <User className="w-8 h-8 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Profile</h1>
-            <p className="text-muted-foreground">Manage your account and preferences</p>
+            <h1 className="text-2xl font-bold text-foreground">{user?.name || 'User'}</h1>
+            <p className="text-muted-foreground">{user?.email || 'user@example.com'}</p>
           </div>
         </div>
 
         <div className="space-y-6">
-          <Card className="card-gradient">
+          <Card className="card-gradient card-rounded">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Settings className="w-5 h-5" />
@@ -41,7 +46,7 @@ export function ProfilePage() {
             </CardContent>
           </Card>
 
-          <Card className="card-gradient">
+          <Card className="card-gradient card-rounded">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Cloud className="w-5 h-5" />
@@ -49,22 +54,38 @@ export function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full justify-start bg-card-gradient">
+              <Button variant="outline" className="w-full justify-start bg-card-gradient btn-rounded">
                 <Download className="w-4 h-4 mr-2" />
                 Export Data (CSV)
               </Button>
-              <Button variant="outline" className="w-full justify-start bg-card-gradient">
+              <Button variant="outline" className="w-full justify-start bg-card-gradient btn-rounded">
                 <Upload className="w-4 h-4 mr-2" />
                 Import Data
               </Button>
-              <Button variant="outline" className="w-full justify-start bg-card-gradient">
+              <Button variant="outline" className="w-full justify-start bg-card-gradient btn-rounded">
                 <Cloud className="w-4 h-4 mr-2" />
                 Sync with Cloud
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="card-gradient">
+          <Card className="card-gradient card-rounded">
+            <CardHeader>
+              <CardTitle>Account</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={onLogout}
+                variant="destructive" 
+                className="w-full justify-start btn-rounded"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card className="card-gradient card-rounded">
             <CardHeader>
               <CardTitle>About All My Things</CardTitle>
             </CardHeader>

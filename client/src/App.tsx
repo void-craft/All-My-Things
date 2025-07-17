@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BottomNavigation } from '@/components/layout/BottomNavigation';
 import { HomePage } from '@/pages/HomePage';
@@ -10,13 +11,21 @@ import { ShoppingPage } from '@/pages/ShoppingPage';
 import { StoresPage } from '@/pages/StoresPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
-import { useState } from 'react';
+import { User } from '@/types';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // TODO: Implement proper auth
+  const [user, setUser] = useState<User | null>(null);
 
-  if (!isLoggedIn) {
-    return <LoginPage />;
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+  };
+
+  if (!user) {
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
@@ -30,7 +39,7 @@ function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/shopping" element={<ShoppingPage />} />
           <Route path="/stores" element={<StoresPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile" element={<ProfilePage user={user} onLogout={handleLogout} />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Routes>
         <BottomNavigation />
