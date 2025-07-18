@@ -65,12 +65,13 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-purple-200 via-pink-200 to-orange-200 text-foreground min-h-screen;
+    /* --- UPDATED: A more vibrant, colorful background gradient & light text --- */
+    @apply bg-gradient-to-br from-rose-500 via-pink-500 to-purple-600 text-slate-100 min-h-screen;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
   
   .dark body {
-    @apply bg-gradient-to-br from-gray-900 via-gray-800 to-gray-700;
+    @apply bg-gradient-to-br from-gray-900 via-slate-800 to-zinc-800;
   }
 }
 
@@ -92,7 +93,8 @@
   }
   
   .button-gradient {
-    @apply bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700;
+    /* --- UPDATED: A bright, high-contrast gradient for the button --- */
+    @apply bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600;
   }
   
   .dark .button-gradient {
