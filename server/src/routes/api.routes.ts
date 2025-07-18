@@ -1,15 +1,33 @@
 // server/src/routes/api.routes.ts
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { ParsedQs } from 'qs';
 import { db } from '../database/connection.js';
+import passport from 'passport';
+import { ParamsDictionary } from 'express-serve-static-core';
 
 const apiRouter = Router();
 
-// --- Existing API Routes (Copied from your index.ts) ---
+// --- GLOBAL API PROTECTION MIDDLEWARE (FIXED) ---
+apiRouter.use((req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated() || !req.user) {
+      console.log('API Request Blocked: Not authenticated for path:', req.path);
+      // Removed the `return` keyword to satisfy the RequestHandler type.
+      res.status(401).json({ message: 'Unauthorized: Please log in to access this resource.' });
+    } else {
+      // Placed next() in an `else` block for clearer control flow.
+      next();
+    }
+});
+// ----------------------------------------
 
+// --- Rooms API ---
 apiRouter.get('/rooms', async (req, res) => {
   try {
-    console.log('Fetching rooms...');
-    const rooms = await db.selectFrom('rooms').selectAll().execute();
+    console.log('Fetching rooms for user:', req.user!.id);
+    const rooms = await db.selectFrom('rooms')
+      .selectAll()
+      .where('user_id', '=', req.user!.id)
+      .execute();
     console.log('Rooms fetched:', rooms.length);
     res.json(rooms);
   } catch (error) {
@@ -21,13 +39,18 @@ apiRouter.get('/rooms', async (req, res) => {
 apiRouter.post('/rooms', async (req, res) => {
   try {
     const { name, color, icon } = req.body;
-    console.log('Creating room:', { name, color, icon });
-
+    console.log('Creating room for user:', req.user!.id, { name, color, icon });
+    
     const room = await db.insertInto('rooms')
-      .values({ name, color, icon })
+      .values({ 
+        user_id: req.user!.id,
+        name, 
+        color, 
+        icon 
+      })
       .returningAll()
       .executeTakeFirst();
-
+    
     console.log('Room created:', room);
     res.json(room);
   } catch (error) {
@@ -38,30 +61,39 @@ apiRouter.post('/rooms', async (req, res) => {
 
 apiRouter.delete('/rooms/:id', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id);
-    console.log('Deleting room:', roomId);
-
-    await db.deleteFrom('rooms').where('id', '=', roomId).execute();
-
-    console.log('Room deleted');
-    res.json({ success: true });
+    const roomId = parseInt(req.params.id!);
+    console.log('Deleting room:', roomId, 'for user:', req.user!.id);
+    
+    const result = await db.deleteFrom('rooms')
+      .where('id', '=', roomId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+    
+    if (result && result.numDeletedRows && result.numDeletedRows > 0) {
+      console.log('Room deleted');
+      res.json({ success: true, message: 'Room deleted successfully.' });
+    } else {
+      res.status(404).json({ error: 'Room not found or not owned by user.' });
+    }
   } catch (error) {
     console.error('Error deleting room:', error);
     res.status(500).json({ error: 'Failed to delete room' });
   }
 });
 
+// --- Items API ---
 apiRouter.get('/rooms/:id/items', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id);
-    console.log('Fetching items for room:', roomId);
-
+    const roomId = parseInt(req.params.id!);
+    console.log('Fetching items for room:', roomId, 'user:', req.user!.id);
+    
     const items = await db.selectFrom('items')
       .selectAll()
       .where('room_id', '=', roomId)
+      .where('user_id', '=', req.user!.id)
       .orderBy('name')
       .execute();
-
+    
     console.log('Items fetched:', items.length);
     res.json(items);
   } catch (error) {
@@ -70,25 +102,36 @@ apiRouter.get('/rooms/:id/items', async (req, res) => {
   }
 });
 
-apiRouter.post('/rooms/:id/items', async (req, res) => {
+apiRouter.post('/rooms/:id/items', async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response): Promise<any> => {
   try {
-    const roomId = parseInt(req.params.id);
+    const roomId = parseInt(req.params.id!);
     const { name, quantity, unit, tags, image_url } = req.body;
-    console.log('Creating room item:', { name, quantity, unit, tags, image_url, roomId });
+    console.log('Creating room item for room:', roomId, 'user:', req.user!.id, { name, quantity, unit, tags, image_url });
+    
+    const roomExists = await db.selectFrom('rooms')
+      .select('id')
+      .where('id', '=', roomId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+
+    if (!roomExists) {
+        return res.status(403).json({ error: 'Forbidden: Room does not exist or is not owned by user.' });
+    }
 
     const item = await db.insertInto('items')
-      .values({
+      .values({ 
+        user_id: req.user!.id,
         room_id: roomId,
         group_id: null,
-        name,
-        quantity: quantity || 1,
-        unit,
-        tags,
-        image_url
+        name, 
+        quantity: quantity || 1, 
+        unit, 
+        tags, 
+        image_url 
       })
       .returningAll()
       .executeTakeFirst();
-
+    
     console.log('Item created:', item);
     res.json(item);
   } catch (error) {
@@ -97,16 +140,18 @@ apiRouter.post('/rooms/:id/items', async (req, res) => {
   }
 });
 
+// --- Item Groups API ---
 apiRouter.get('/rooms/:id/groups', async (req, res) => {
   try {
-    const roomId = parseInt(req.params.id);
-    console.log('Fetching groups for room:', roomId);
-
+    const roomId = parseInt(req.params.id!);
+    console.log('Fetching groups for room:', roomId, 'user:', req.user!.id);
+    
     const groups = await db.selectFrom('item_groups')
       .selectAll()
       .where('room_id', '=', roomId)
+      .where('user_id', '=', req.user!.id)
       .execute();
-
+    
     console.log('Groups fetched:', groups.length);
     res.json(groups);
   } catch (error) {
@@ -115,17 +160,33 @@ apiRouter.get('/rooms/:id/groups', async (req, res) => {
   }
 });
 
-apiRouter.post('/rooms/:id/groups', async (req, res) => {
+apiRouter.post('/rooms/:id/groups', async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response): Promise<any> => {
   try {
-    const roomId = parseInt(req.params.id);
+    const roomId = parseInt(req.params.id!);
     const { name, icon, image_url } = req.body;
-    console.log('Creating group:', { name, icon, image_url, roomId });
+    console.log('Creating group for room:', roomId, 'user:', req.user!.id, { name, icon, image_url });
 
-    const group = await db.insertInto('item_groups')
-      .values({ room_id: roomId, name, icon, image_url })
-      .returningAll()
+    const roomExists = await db.selectFrom('rooms')
+      .select('id')
+      .where('id', '=', roomId)
+      .where('user_id', '=', req.user!.id)
       .executeTakeFirst();
 
+    if (!roomExists) {
+        return res.status(403).json({ error: 'Forbidden: Room does not exist or is not owned by user.' });
+    }
+    
+    const group = await db.insertInto('item_groups')
+      .values({ 
+        user_id: req.user!.id,
+        room_id: roomId, 
+        name, 
+        icon, 
+        image_url 
+      })
+      .returningAll()
+      .executeTakeFirst();
+    
     console.log('Group created:', group);
     res.json(group);
   } catch (error) {
@@ -136,30 +197,39 @@ apiRouter.post('/rooms/:id/groups', async (req, res) => {
 
 apiRouter.delete('/groups/:id', async (req, res) => {
   try {
-    const groupId = parseInt(req.params.id);
-    console.log('Deleting group:', groupId);
-
-    await db.deleteFrom('item_groups').where('id', '=', groupId).execute();
-
-    console.log('Group deleted');
-    res.json({ success: true });
+    const groupId = parseInt(req.params.id!);
+    console.log('Deleting group:', groupId, 'for user:', req.user!.id);
+    
+    const result = await db.deleteFrom('item_groups')
+      .where('id', '=', groupId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+    
+    if (result && result.numDeletedRows && result.numDeletedRows > 0) {
+      console.log('Group deleted');
+      res.json({ success: true, message: 'Group deleted successfully.' });
+    } else {
+      res.status(404).json({ error: 'Group not found or not owned by user.' });
+    }
   } catch (error) {
     console.error('Error deleting group:', error);
     res.status(500).json({ error: 'Failed to delete group' });
   }
 });
 
+// --- Items (standalone / by group) API ---
 apiRouter.get('/groups/:id/items', async (req, res) => {
   try {
-    const groupId = parseInt(req.params.id);
-    console.log('Fetching items for group:', groupId);
-
+    const groupId = parseInt(req.params.id!);
+    console.log('Fetching items for group:', groupId, 'user:', req.user!.id);
+    
     const items = await db.selectFrom('items')
       .selectAll()
       .where('group_id', '=', groupId)
+      .where('user_id', '=', req.user!.id)
       .orderBy('name')
       .execute();
-
+    
     console.log('Items fetched:', items.length);
     res.json(items);
   } catch (error) {
@@ -168,25 +238,36 @@ apiRouter.get('/groups/:id/items', async (req, res) => {
   }
 });
 
-apiRouter.post('/groups/:id/items', async (req, res) => {
+apiRouter.post('/groups/:id/items', async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response): Promise<any> => {
   try {
-    const groupId = parseInt(req.params.id);
+    const groupId = parseInt(req.params.id!);
     const { name, quantity, unit, tags, image_url, room_id } = req.body;
-    console.log('Creating item:', { name, quantity, unit, tags, image_url, groupId, room_id });
+    console.log('Creating item for group:', groupId, 'user:', req.user!.id, { name, quantity, unit, tags, image_url, room_id });
+    
+    const groupExists = await db.selectFrom('item_groups')
+      .select('id')
+      .where('id', '=', groupId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+
+    if (!groupExists) {
+        return res.status(403).json({ error: 'Forbidden: Group does not exist or is not owned by user.' });
+    }
 
     const item = await db.insertInto('items')
-      .values({
-        group_id: groupId,
+      .values({ 
+        user_id: req.user!.id,
+        group_id: groupId, 
         room_id: room_id || null,
-        name,
-        quantity: quantity || 1,
-        unit,
-        tags,
-        image_url
+        name, 
+        quantity: quantity || 1, 
+        unit, 
+        tags, 
+        image_url 
       })
       .returningAll()
       .executeTakeFirst();
-
+    
     console.log('Item created:', item);
     res.json(item);
   } catch (error) {
@@ -197,29 +278,37 @@ apiRouter.post('/groups/:id/items', async (req, res) => {
 
 apiRouter.delete('/items/:id', async (req, res) => {
   try {
-    const itemId = parseInt(req.params.id);
-    console.log('Deleting item:', itemId);
-
-    await db.deleteFrom('items').where('id', '=', itemId).execute();
-
-    console.log('Item deleted');
-    res.json({ success: true });
+    const itemId = parseInt(req.params.id!);
+    console.log('Deleting item:', itemId, 'for user:', req.user!.id);
+    
+    const result = await db.deleteFrom('items')
+      .where('id', '=', itemId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+    
+    if (result && result.numDeletedRows && result.numDeletedRows > 0) {
+      console.log('Item deleted');
+      res.json({ success: true, message: 'Item deleted successfully.' });
+    } else {
+      res.status(404).json({ error: 'Item not found or not owned by user.' });
+    }
   } catch (error) {
     console.error('Error deleting item:', error);
     res.status(500).json({ error: 'Failed to delete item' });
   }
 });
 
+// --- Search API ---
 apiRouter.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
-    console.log('Searching for:', query);
-
+    console.log('Searching for:', query, 'for user:', req.user!.id);
+    
     if (!query) {
       res.json([]);
       return;
     }
-
+    
     const items = await db.selectFrom('items')
       .leftJoin('item_groups', 'items.group_id', 'item_groups.id')
       .leftJoin('rooms', 'items.room_id', 'rooms.id')
@@ -233,11 +322,14 @@ apiRouter.get('/search', async (req, res) => {
         'item_groups.name as group_name',
         'rooms.name as room_name'
       ])
-      .where('items.name', 'like', `%${query}%`)
-      .where('items.tags', 'like', `%${query}%`)
+      .where('items.user_id', '=', req.user!.id)
+      .where((eb) => eb.or([
+        eb('items.name', 'like', `%${query}%`),
+        eb('items.tags', 'like', `%${query}%`)
+      ]))
       .orderBy('items.name')
       .execute();
-
+    
     console.log('Search results:', items.length);
     res.json(items);
   } catch (error) {
@@ -246,10 +338,14 @@ apiRouter.get('/search', async (req, res) => {
   }
 });
 
+// --- Stores API ---
 apiRouter.get('/stores', async (req, res) => {
   try {
-    console.log('Fetching stores...');
-    const stores = await db.selectFrom('stores').selectAll().execute();
+    console.log('Fetching stores for user:', req.user!.id);
+    const stores = await db.selectFrom('stores')
+      .selectAll()
+      .where('user_id', '=', req.user!.id)
+      .execute();
     console.log('Stores fetched:', stores.length);
     res.json(stores);
   } catch (error) {
@@ -261,10 +357,16 @@ apiRouter.get('/stores', async (req, res) => {
 apiRouter.post('/stores', async (req, res) => {
   try {
     const { name, color, icon, image_url } = req.body;
-    console.log('Creating store:', { name, color, icon, image_url });
+    console.log('Creating store for user:', req.user!.id, { name, color, icon, image_url });
 
     const store = await db.insertInto('stores')
-      .values({ name, color, icon, image_url })
+      .values({ 
+        user_id: req.user!.id,
+        name, 
+        color, 
+        icon, 
+        image_url 
+      })
       .returningAll()
       .executeTakeFirst();
 
@@ -278,27 +380,36 @@ apiRouter.post('/stores', async (req, res) => {
 
 apiRouter.delete('/stores/:id', async (req, res) => {
   try {
-    const storeId = parseInt(req.params.id);
-    console.log('Deleting store:', storeId);
-
-    await db.deleteFrom('stores').where('id', '=', storeId).execute();
-
-    console.log('Store deleted');
-    res.json({ success: true });
+    const storeId = parseInt(req.params.id!);
+    console.log('Deleting store:', storeId, 'for user:', req.user!.id);
+    
+    const result = await db.deleteFrom('stores')
+      .where('id', '=', storeId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+    
+    if (result && result.numDeletedRows && result.numDeletedRows > 0) {
+      console.log('Store deleted');
+      res.json({ success: true, message: 'Store deleted successfully.' });
+    } else {
+      res.status(404).json({ error: 'Store not found or not owned by user.' });
+    }
   } catch (error) {
     console.error('Error deleting store:', error);
     res.status(500).json({ error: 'Failed to delete store' });
   }
 });
 
+// --- Shopping Lists API ---
 apiRouter.get('/shopping-lists', async (req, res) => {
   try {
-    console.log('Fetching shopping lists...');
+    console.log('Fetching shopping lists for user:', req.user!.id);
     const lists = await db.selectFrom('shopping_lists')
       .selectAll()
+      .where('user_id', '=', req.user!.id)
       .orderBy('created_at', 'desc')
       .execute();
-
+    
     console.log('Shopping lists fetched:', lists.length);
     res.json(lists);
   } catch (error) {
@@ -310,13 +421,16 @@ apiRouter.get('/shopping-lists', async (req, res) => {
 apiRouter.post('/shopping-lists', async (req, res) => {
   try {
     const { store_name } = req.body;
-    console.log('Creating shopping list:', { store_name });
+    console.log('Creating shopping list for user:', req.user!.id, { store_name });
 
     const list = await db.insertInto('shopping_lists')
-      .values({ store_name })
+      .values({ 
+        user_id: req.user!.id,
+        store_name 
+      })
       .returningAll()
       .executeTakeFirst();
-
+    
     console.log('Shopping list created:', list);
     res.json(list);
   } catch (error) {
@@ -327,15 +441,16 @@ apiRouter.post('/shopping-lists', async (req, res) => {
 
 apiRouter.get('/shopping-lists/:id/items', async (req, res) => {
   try {
-    const listId = parseInt(req.params.id);
-    console.log('Fetching shopping items for list:', listId);
-
+    const listId = parseInt(req.params.id!);
+    console.log('Fetching shopping items for list:', listId, 'user:', req.user!.id);
+    
     const items = await db.selectFrom('shopping_items')
       .selectAll()
       .where('shopping_list_id', '=', listId)
+      .where('user_id', '=', req.user!.id)
       .orderBy('item_name')
       .execute();
-
+    
     console.log('Shopping items fetched:', items.length);
     res.json(items);
   } catch (error) {
@@ -344,23 +459,35 @@ apiRouter.get('/shopping-lists/:id/items', async (req, res) => {
   }
 });
 
-apiRouter.post('/shopping-lists/:id/items', async (req, res) => {
+// THIS ROUTE IS NOW FIXED
+apiRouter.post('/shopping-lists/:id/items', async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response): Promise<any> => {
   try {
-    const listId = parseInt(req.params.id);
+    const listId = parseInt(req.params.id!);
     const { item_name, quantity, unit, store_id } = req.body;
-    console.log('Creating shopping item:', { item_name, quantity, unit, store_id, listId });
+    console.log('Creating shopping item for list:', listId, 'user:', req.user!.id, { item_name, quantity, unit, store_id });
+    
+    const listExists = await db.selectFrom('shopping_lists')
+      .select('id')
+      .where('id', '=', listId)
+      .where('user_id', '=', req.user!.id)
+      .executeTakeFirst();
+
+    if (!listExists) {
+        return res.status(403).json({ error: 'Forbidden: Shopping list does not exist or is not owned by user.' });
+    }
 
     const item = await db.insertInto('shopping_items')
       .values({
-        shopping_list_id: listId,
-        item_name,
-        quantity: quantity || 1,
+        user_id: req.user!.id,
+        shopping_list_id: listId, 
+        item_name, 
+        quantity: quantity || 1, 
         unit,
-        store_id
+        store_id 
       })
       .returningAll()
       .executeTakeFirst();
-
+    
     console.log('Shopping item created:', item);
     res.json(item);
   } catch (error) {
@@ -369,11 +496,13 @@ apiRouter.post('/shopping-lists/:id/items', async (req, res) => {
   }
 });
 
+// --- Notifications API ---
 apiRouter.get('/notifications', async (req, res) => {
   try {
-    console.log('Fetching notifications...');
+    console.log('Fetching notifications for user:', req.user!.id);
     const notifications = await db.selectFrom('notifications')
       .selectAll()
+      .where('user_id', '=', req.user!.id)
       .orderBy('created_at', 'desc')
       .execute();
 

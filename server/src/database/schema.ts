@@ -2,6 +2,7 @@
 export interface DatabaseSchema {
   rooms: {
     id: number;
+    user_id: number;
     name: string;
     color: string;
     icon: string;
@@ -9,6 +10,7 @@ export interface DatabaseSchema {
   };
   item_groups: {
     id: number;
+    user_id: number;
     room_id: number;
     name: string;
     icon: string;
@@ -17,6 +19,7 @@ export interface DatabaseSchema {
   };
   items: {
     id: number;
+    user_id: number;
     group_id: number | null;
     room_id: number | null;
     name: string;
@@ -31,11 +34,13 @@ export interface DatabaseSchema {
   };
   shopping_lists: {
     id: number;
+    user_id: number;
     store_name: string;
     created_at: string;
   };
   shopping_items: {
     id: number;
+    user_id: number;
     shopping_list_id: number;
     item_name: string;
     quantity: number;
@@ -46,6 +51,7 @@ export interface DatabaseSchema {
   };
   stores: {
     id: number;
+    user_id: number;
     name: string;
     color: string;
     icon: string | null;
@@ -68,7 +74,7 @@ export interface DatabaseSchema {
   };
   notifications: {
     id: number;
-    user_id: number | null;
+    user_id: number;
     type: string;
     title: string;
     message: string;
