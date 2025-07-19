@@ -459,7 +459,6 @@ apiRouter.get('/shopping-lists/:id/items', async (req, res) => {
   }
 });
 
-// THIS ROUTE IS NOW FIXED
 apiRouter.post('/shopping-lists/:id/items', async (req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>, res: Response): Promise<any> => {
   try {
     const listId = parseInt(req.params.id!);
@@ -511,6 +510,37 @@ apiRouter.get('/notifications', async (req, res) => {
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+apiRouter.put('/rooms/:id', async (req, res) => {
+  try {
+    const roomId = parseInt(req.params.id!);
+    const { name, color, icon } = req.body;
+    const userId = req.user!.id;
+
+    console.log('Updating room:', roomId, 'for user:', userId, { name, color, icon });
+
+    const updatedRoom = await db.updateTable('rooms')
+      .set({
+        name,
+        color,
+        icon,
+      })
+      .where('id', '=', roomId)
+      .where('user_id', '=', userId)
+      .returningAll()
+      .executeTakeFirst();
+
+    if (updatedRoom) {
+      console.log('Room updated successfully:', updatedRoom);
+      res.json(updatedRoom);
+    } else {
+      res.status(404).json({ error: 'Room not found or you do not have permission to edit it.' });
+    }
+  } catch (error) {
+    console.error('Error updating room:', error);
+    res.status(500).json({ error: 'Failed to update room' });
   }
 });
 
